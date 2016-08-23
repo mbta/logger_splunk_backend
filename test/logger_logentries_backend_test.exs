@@ -58,28 +58,42 @@ defmodule Logger.Backend.Logentries.Test do
     config(level: :info)
     Logger.warn("you will log me")
     assert connector().exists()
-    assert read_log() == "[warn] you will log me <<logentries-token>>\n"
+    assert read_log() == " <<logentries-token>> [warn] you will log me\n"
   end
 
   test "can configure format" do
     config format: "$message ($level)\n"
 
     Logger.info("I am formatted")
-    assert read_log() == "I am formatted <<logentries-token>> (info)\n"
+    assert read_log() == " <<logentries-token>> I am formatted (info)\n"
   end
 
   test "can configure metadata" do
     config format: "$metadata$message\n", metadata: [:user_id, :auth]
 
     Logger.info("hello")
-    assert read_log() == "hello <<logentries-token>>\n"
+    assert read_log() == " <<logentries-token>> hello\n"
 
     Logger.metadata(auth: true)
     Logger.metadata(user_id: 11)
     Logger.metadata(user_id: 13)
 
     Logger.info("hello")
-    assert read_log() == "user_id=13 auth=true hello <<logentries-token>>\n"
+    assert read_log() == " <<logentries-token>> user_id=13 auth=true hello\n"
+  end
+
+  test "can handle multi-line messages" do
+    config format: "$metadata$message\n", metadata: [:user_id, :auth]
+    Logger.metadata(auth: true)
+    Logger.info("hello\n world")
+    assert read_log() == " <<logentries-token>> auth=true hello\n <<logentries-token>> auth=true  world\n"
+  end
+
+  test "makes sure messages end with a newline" do
+    Logger.info("hello")
+    assert read_log() == " <<logentries-token>> [info] hello\n"
+    Logger.info("hello\n")
+    assert read_log() == " <<logentries-token>> [info] hello\n"
   end
 
   defp config(opts) do

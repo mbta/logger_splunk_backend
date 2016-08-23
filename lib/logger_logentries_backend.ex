@@ -23,12 +23,49 @@ defmodule Logger.Backend.Logentries do
   end
 
   defp log_event(level, msg, ts, md, %{connector: connector, host: host, port: port, token: token} = state) do
-    log_entry = format_event(level, msg, ts, md, state)
-    connector.transmit(host, port, " #{token} #{log_entry}")
+    msg
+    |> format_message(level, ts, md, state)
+    |> add_token_to_lines(token)
+    |> transmit(connector, host, port)
+  end
+
+  defp format_message(msg, level, ts, md, state) do
+    msg
+    |> IO.chardata_to_string
+    |> String.split("\n")
+    |> filter_empty_strings
+    |> Enum.map(&(format_event(level, &1, ts, md, state)))
+    |> Enum.join("")
   end
 
   defp format_event(level, msg, ts, md, %{format: format, metadata: keys}) do
     Logger.Formatter.format(format, level, msg, ts, take_metadata(md, keys))
+  end
+
+  defp add_token_to_lines(entry, token) do
+    entry
+    |> IO.chardata_to_string
+    |> String.split("\n")
+    |> filter_empty_strings
+    |> Enum.map(&(" #{token} #{&1}"))
+    |> Enum.join("\n")
+    |> add_optional_newline
+  end
+
+  defp filter_empty_strings(strings) do
+    strings
+    |> Enum.filter(&(String.strip(&1) != ""))
+  end
+
+  defp add_optional_newline(<<_::utf8, "\n">>=entry) do
+    entry
+  end
+  defp add_optional_newline(entry) do
+    entry <> "\n"
+  end
+
+  defp transmit(entry, connector, host, port) do
+    connector.transmit(host, port, entry)
   end
 
   defp take_metadata(metadata, keys) do
