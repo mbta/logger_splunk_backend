@@ -5,7 +5,7 @@ defmodule Logger.Backend.Logentries.Output.Ssl do
   end
 
   defp tcp_send({:error, error}, _message) do
-    #raise "Error sending via tcp: #{error}"
+    IO.puts("ERROR while sending via SSL to log entries: #{inspect error}")
   end
 
   defp tcp_send({:ok, socket}, message) do
