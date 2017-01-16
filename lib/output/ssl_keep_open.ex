@@ -54,7 +54,7 @@ defmodule Logger.Backend.Logentries.Output.SslKeepOpen.Server do
   end
 
   defp ensure_connection(%{connections: connections}, host, port) do
-    case Dict.get(connections, {host, port}) do
+    case Map.get(connections, {host, port}) do
       nil ->
         new_socket(host, port)
       {:error, _error} ->
