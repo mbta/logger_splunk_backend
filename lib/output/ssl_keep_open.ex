@@ -31,18 +31,30 @@ defmodule Logger.Backend.Logentries.Output.SslKeepOpen.Server do
     connections: %{}
   ]
 
-  def start_link do
-    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
+  def child_spec(_args) do
+    %{
+      id: __MODULE__,
+      start: {__MODULE__, :start_link, []},
+      type: :worker,
+      restart: :permanent,
+      shutdown: 500
+    }
   end
 
-  def init(nil) do
-    {:ok, %__MODULE__{}}
+  def start_link do
+    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
   def transmit(host, port, message) do
     GenServer.cast(__MODULE__, {:transmit, host, port, message})
   end
 
+  @impl true
+  def init(nil) do
+    {:ok, %__MODULE__{}}
+  end
+
+  @impl true
   def handle_cast({:transmit, host, port, message}, state) do
     socket = state
     |> ensure_connection(host, port)

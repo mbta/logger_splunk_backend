@@ -38,7 +38,7 @@ defmodule Logger.Backend.Logentries.Test do
       token: "<<logentries-token>>"
     ])
     on_exit fn ->
-      connector.destroy()
+      connector().destroy()
     end
     :ok
   end
@@ -101,7 +101,7 @@ defmodule Logger.Backend.Logentries.Test do
   end
 
   defp connector() do
-    {:ok, connector} = GenEvent.call(Logger, @backend, :connector)
+    {:ok, connector} = :gen_event.call(Logger, @backend, :connector)
     connector
   end
 

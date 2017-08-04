@@ -1,24 +1,40 @@
 defmodule Logger.Backend.Logentries do
-  use GenEvent
+  @behaviour :gen_event
 
   @default_format "[$level] $message\n"
 
+  require Logger
+
+  @impl true
   def init({__MODULE__, name}) do
     {:ok, configure(name, [])}
   end
 
+  @impl true
   def handle_call({:configure, opts}, %{name: name}) do
     {:ok, :ok, configure(name, opts)}
   end
 
+  @impl true
   def handle_call(:connector, %{connector: connector} = state) do
     {:ok, {:ok, connector}, state}
   end
 
+  @impl true
   def handle_event({level, _gl, {Logger, msg, ts, md}}, %{level: min_level} = state) do
     if is_nil(min_level) or Logger.compare_levels(level, min_level) != :lt do
       log_event(level, msg, ts, md, state)
     end
+    {:ok, state}
+  end
+
+  @impl true
+  def handle_info({:io_reply, _ref, :ok}, state) do
+    # ignored
+    {:ok, state}
+  end
+  def handle_info(message, state) do
+    Logger.warn(fn -> "#{__MODULE__} unhandled message: #{inspect message}" end)
     {:ok, state}
   end
 
@@ -54,7 +70,7 @@ defmodule Logger.Backend.Logentries do
 
   defp filter_empty_strings(strings) do
     strings
-    |> Enum.filter(&(String.strip(&1) != ""))
+    |> Enum.reject(&(String.trim(&1) == ""))
   end
 
   defp add_optional_newline(<<_::utf8, "\n">>=entry) do
