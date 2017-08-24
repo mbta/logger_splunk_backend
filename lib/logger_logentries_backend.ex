@@ -104,7 +104,6 @@ defmodule Logger.Backend.Logentries do
     level = Keyword.get(opts, :level, :debug)
     metadata = Keyword.get(opts, :metadata, [])
     format = Keyword.get(opts, :format, @default_format) |> Logger.Formatter.compile
-    token = Keyword.get(opts, :token, "")
 
     %{
       name: name,
@@ -114,7 +113,15 @@ defmodule Logger.Backend.Logentries do
       level: level,
       format: format,
       metadata: metadata,
-      token: token
+      token: token(Keyword.get(opts, :token, ""))
+
     }
+  end
+
+  defp token({:system, envvar}) do
+    System.get_env(envvar)
+  end
+  defp token(binary) when is_binary(binary) do
+    binary
   end
 end
