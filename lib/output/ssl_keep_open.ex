@@ -1,28 +1,28 @@
-defmodule Logger.Backend.Logentries.Output.SslKeepOpen do
+defmodule Logger.Backend.Splunk.Output.SslKeepOpen do
   def transmit(host, port, message) do
-    Logger.Backend.Logentries.Output.SslKeepOpen.Server.transmit(host, port, message)
+    Logger.Backend.Splunk.Output.SslKeepOpen.Server.transmit(host, port, message)
   end
 end
 
-defmodule Logger.Backend.Logentries.Output.SslKeepOpen.Server do
+defmodule Logger.Backend.Splunk.Output.SslKeepOpen.Server do
   @moduledoc """
 
-  A GenServer which maintains connections to the Logentries server.
+  A GenServer which maintains connections to the Splunk server.
 
   ## Usage
 
-  Configure the Logentries backend to use the SslKeepOpen backend:
+  Configure the Splunk backend to use the SslKeepOpen backend:
 
-      config :logger, :logentries,
-        connector: Logger.Backend.Logentries.Output.SslKeepOpen,
-        host: 'data.logentries.com',
+      config :logger, :splunk,
+        connector: Logger.Backend.Splunk.Output.SslKeepOpen,
+        host: 'data.splunk.com',
         port: 443,
-        token: "${LOGENTRIES_TOKEN}",
+        token: "${SPLUNK_TOKEN}",
 
   And make sure this server is supervised:
 
       # In your application
-      worker(Logger.Backend.Logentries.Output.SslKeepOpen.Server, [])
+      worker(Logger.Backend.Splunk.Output.SslKeepOpen.Server, [])
 
   """
   use GenServer

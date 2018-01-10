@@ -1,4 +1,4 @@
-defmodule Logger.Backend.Logentries.Output.Ssl do
+defmodule Logger.Backend.Splunk.Output.Ssl do
   def transmit(host, port, message) do
     :ssl.connect(host, port, [:binary, active: false])
     |> tcp_send(message)

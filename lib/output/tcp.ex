@@ -1,4 +1,4 @@
-defmodule Logger.Backend.Logentries.Output.Tcp do
+defmodule Logger.Backend.Splunk.Output.Tcp do
   def transmit(host, port, message) do
     :gen_tcp.connect(host, port, [:binary, active: false])
     |> tcp_send(message)

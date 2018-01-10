@@ -1,9 +1,9 @@
-defmodule LoggerLogentriesBackend.Mixfile do
+defmodule LoggerSplunkBackend.Mixfile do
   use Mix.Project
 
   def project do
     [
-      app: :logger_logentries_backend,
+      app: :logger_splunk_backend,
       version: "0.0.1",
       elixir: "~> 1.0",
       build_embedded: Mix.env == :prod,
@@ -26,8 +26,8 @@ defmodule LoggerLogentriesBackend.Mixfile do
 
   defp description do
     """
-    A Logger backend to support the Logentries service
-    (logentries.com) TCP input log mechanism
+    A Logger backend to support the Splunk service
+    (splunk.com) TCP input log mechanism
     """
   end
 
@@ -36,7 +36,7 @@ defmodule LoggerLogentriesBackend.Mixfile do
       files: ["config", "lib", "mix.exs", "README*", "LICENSE*"],
       maintainers: ["Sysdia Solutions"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/sysdia-solutions/logger_logentries_backend"}
+      links: %{"GitHub" => "https://github.com/sysdia-solutions/logger_splunk_backend"}
     ]
   end
 end

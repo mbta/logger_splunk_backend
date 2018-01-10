@@ -22,20 +22,20 @@ defmodule Output.Test do
   end
 end
 
-defmodule Logger.Backend.Logentries.Test do
+defmodule Logger.Backend.Splunk.Test do
   use ExUnit.Case, async: false
   require Logger
 
-  @backend {Logger.Backend.Logentries, :test}
+  @backend {Logger.Backend.Splunk, :test}
   Logger.add_backend @backend
 
   setup do
     config([
       connector: Output.Test,
-      host: 'logentries.url',
+      host: 'splunk.url',
       port: 10000,
       format: "[$level] $message\n",
-      token: "<<logentries-token>>"
+      token: "<<splunk-token>>"
     ])
     on_exit fn ->
       connector().destroy()
@@ -58,28 +58,28 @@ defmodule Logger.Backend.Logentries.Test do
     config(level: :info)
     Logger.warn("you will log me")
     assert connector().exists()
-    assert read_log() == " <<logentries-token>> [warn] you will log me\n"
+    assert read_log() == " <<splunk-token>> [warn] you will log me\n"
   end
 
   test "can configure format" do
     config format: "$message ($level)\n"
 
     Logger.info("I am formatted")
-    assert read_log() == " <<logentries-token>> I am formatted (info)\n"
+    assert read_log() == " <<splunk-token>> I am formatted (info)\n"
   end
 
   test "can configure metadata" do
     config format: "$metadata$message\n", metadata: [:user_id, :auth]
 
     Logger.info("hello")
-    assert read_log() == " <<logentries-token>> hello\n"
+    assert read_log() == " <<splunk-token>> hello\n"
 
     Logger.metadata(auth: true)
     Logger.metadata(user_id: 11)
     Logger.metadata(user_id: 13)
 
     Logger.info("hello")
-    assert read_log() == " <<logentries-token>> user_id=13 auth=true hello\n"
+    assert read_log() == " <<splunk-token>> user_id=13 auth=true hello\n"
   end
 
   test "can configure token from environment" do
@@ -92,14 +92,14 @@ defmodule Logger.Backend.Logentries.Test do
     config format: "$metadata$message\n", metadata: [:user_id, :auth]
     Logger.metadata(auth: true)
     Logger.info("hello\n world")
-    assert read_log() == " <<logentries-token>> auth=true hello\n <<logentries-token>> auth=true  world\n"
+    assert read_log() == " <<splunk-token>> auth=true hello\n <<splunk-token>> auth=true  world\n"
   end
 
   test "makes sure messages end with a newline" do
     Logger.info("hello")
-    assert read_log() == " <<logentries-token>> [info] hello\n"
+    assert read_log() == " <<splunk-token>> [info] hello\n"
     Logger.info("hello\n")
-    assert read_log() == " <<logentries-token>> [info] hello\n"
+    assert read_log() == " <<splunk-token>> [info] hello\n"
   end
 
   defp config(opts) do
