@@ -1,4 +1,4 @@
-defmodule Logger.Backend.Logentries do
+defmodule Logger.Backend.Splunk do
   @behaviour :gen_event
 
   @default_format "[$level] $message\n"
@@ -98,9 +98,9 @@ defmodule Logger.Backend.Logentries do
     opts = Keyword.merge(env, opts)
     Application.put_env(:logger, name, opts)
 
-    connector = Keyword.get(opts, :connector, Logger.Backend.Logentries.Output.Tcp)
-    host = Keyword.get(opts, :host, 'data.logentries.com')
-    port = Keyword.get(opts, :port, 80)
+    connector = Keyword.get(opts, :connector, Logger.Backend.Splunk.Output.Tcp)
+    host = Keyword.get(opts, :host, 'mbta.splunkcloud.com')
+    port = Keyword.get(opts, :port, 9997)
     level = Keyword.get(opts, :level, :debug)
     metadata = Keyword.get(opts, :metadata, [])
     format = Keyword.get(opts, :format, @default_format) |> Logger.Formatter.compile

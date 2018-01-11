@@ -1,16 +1,16 @@
-LoggerLogentriesBackend
+LoggerSplunkBackend
 =======================
 
 ## About
 
 A backend for the [Elixir Logger](http://elixir-lang.org/docs/v1.0/logger/Logger.html)
-that will send logs to the [Logentries TCP input](https://logentries.com/doc/input-token/).
+that will send logs to the [Splunk TCP input](https://data.splunkcloud.com).
 
 ## Supported options
 
-* **host**: String.t. The hostname of the logentries endpoint. [default: `data.logentries.com`]
-* **port**: Integer. The port number for logentries. [default: `80`]
-* **token**: String.t. The unique logentries token for the log destination.
+* **host**: String.t. The hostname of the Splunk endpoint. [default: `data.splunkcloud.com`]
+* **port**: Integer. The port number for Splunk. [default: `80`]
+* **token**: String.t. The unique Splunk token for the log destination.
 * **format**: String.t. The logging format of the message. [default: `[$level] $message\n`].
 * **level**: Atom. Minimum level for this backend. [default: `:debug`]
 * **metdata**: Keyword.t. Extra fields to be added when sending the logs. These will
@@ -22,7 +22,7 @@ To use it in your Mix projects, first add it as a dependency:
 
 ```elixir
 def deps do
-  [{:logger_logentries_backend, "~> 0.0.1"}]
+  [{:logger_splunk_backend, "~> 0.0.1"}]
 end
 ```
 Then run mix deps.get to install it.
@@ -32,11 +32,11 @@ Then run mix deps.get to install it.
 ### Runtime
 
 ```elixir
-Logger.add_backend {Logger.Backend.Logentries, :debug}
-Logger.configure {Logger.Backend.Logentries, :debug},
-  host: 'data.logentries.com',
+Logger.add_backend {Logger.Backend.Splunk, :debug}
+Logger.configure {Logger.Backend.Splunk, :debug},
+  host: 'data.Splunk.com',
   port: 10000,
-  token: "logentries-token-goes-here",
+  token: "Splunk-token-goes-here",
   level: :debug,
   format: "[$level] $message\n"
 ```
@@ -45,12 +45,12 @@ Logger.configure {Logger.Backend.Logentries, :debug},
 
 ```elixir
 config :logger,
-  backends: [{Logger.Backend.Logentries, :error_log}, :console]
+  backends: [{Logger.Backend.Splunk, :error_log}, :console]
 
 config :logger, :error_log,
-  host: 'data.logentries.com',
+  host: 'data.Splunk.com',
   port: 10000,
-  token: "logentries-token-goes-here",
+  token: "Splunk-token-goes-here",
   level: :error,
   format: "[$level] $message\n"
 ```
