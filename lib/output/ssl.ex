@@ -1,7 +1,8 @@
 defmodule Logger.Backend.Splunk.Output.Ssl do
-  def transmit(host, port, message) do
-    :ssl.connect(host, port, [:binary, active: false])
-    |> tcp_send(message)
+  def transmit(host, port, message, token) do
+    msg = "{\"sourcetype\": \"httpevent\", \"event\": #{message}}"
+    HTTPoison.start
+    HTTPoison.request(:post, "127.0.0.1:8080", "test", [{"Authorization", "Splunk token"}])
   end
 
   defp tcp_send({:error, error}, _message) do

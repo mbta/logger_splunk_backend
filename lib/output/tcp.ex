@@ -1,7 +1,11 @@
 defmodule Logger.Backend.Splunk.Output.Tcp do
-  def transmit(host, port, message) do
-    :gen_tcp.connect(host, port, [:binary, active: false])
-    |> tcp_send(message)
+  def transmit(host, port, message, token) do
+    msg = "{\"sourcetype\": \"httpevent\", \"event\": \"#{message}\"}"
+    IO.inspect msg
+    IO.inspect host
+    IO.inspect token
+    HTTPoison.start
+    HTTPoison.request(:post, host, msg, [{"Authorization", "Splunk #{token}"}])
   end
 
   defp tcp_send({:error, error}, _message) do

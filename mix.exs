@@ -21,7 +21,7 @@ defmodule LoggerSplunkBackend.Mixfile do
   end
 
   defp deps do
-    []
+    [{:httpoison, "~> 1.0"}]
   end
 
   defp description do

@@ -41,8 +41,7 @@ defmodule Logger.Backend.Splunk do
   defp log_event(level, msg, ts, md, %{connector: connector, host: host, port: port, token: token} = state) do
     msg
     |> format_message(level, ts, md, state)
-    |> add_token_to_lines(token)
-    |> transmit(connector, host, port)
+    |> transmit(connector, host, port, token)
   end
 
   defp format_message(msg, level, ts, md, state) do
@@ -80,8 +79,8 @@ defmodule Logger.Backend.Splunk do
     entry <> "\n"
   end
 
-  defp transmit(entry, connector, host, port) do
-    connector.transmit(host, port, entry)
+  defp transmit(entry, connector, host, port, token) do
+    connector.transmit(host, port, entry, token)
   end
 
   defp take_metadata(metadata, keys) do

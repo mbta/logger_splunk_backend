@@ -1,6 +1,6 @@
 defmodule Logger.Backend.Splunk.Output.SslKeepOpen do
-  def transmit(host, port, message) do
-    Logger.Backend.Splunk.Output.SslKeepOpen.Server.transmit(host, port, message)
+  def transmit(host, port, message, token) do
+    Logger.Backend.Splunk.Output.SslKeepOpen.Server.transmit(host, port, message, token)
   end
 end
 
@@ -45,8 +45,8 @@ defmodule Logger.Backend.Splunk.Output.SslKeepOpen.Server do
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
-  def transmit(host, port, message) do
-    GenServer.cast(__MODULE__, {:transmit, host, port, message})
+  def transmit(host, port, message, token) do
+    GenServer.cast(__MODULE__, {:transmit, host, port, message, token})
   end
 
   @impl true
@@ -55,7 +55,7 @@ defmodule Logger.Backend.Splunk.Output.SslKeepOpen.Server do
   end
 
   @impl true
-  def handle_cast({:transmit, host, port, message}, state) do
+  def handle_cast({:transmit, host, port, message, token}, state) do
     socket = state
     |> ensure_connection(host, port)
     |> send_message(message)
