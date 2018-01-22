@@ -1,7 +1,7 @@
 defmodule Output.Test do
   @logfile "test_log.log"
 
-  def transmit(_host, _port, message, _token) do
+  def transmit(message, _host, _token) do
     File.write!(@logfile, message)
   end
 

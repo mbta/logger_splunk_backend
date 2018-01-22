@@ -38,10 +38,10 @@ defmodule Logger.Backend.Splunk do
     {:ok, state}
   end
 
-  defp log_event(level, msg, ts, md, %{connector: connector, host: host, port: port, token: token} = state) do
+  defp log_event(level, msg, ts, md, %{connector: connector, host: host, token: token} = state) do
     msg
     |> format_message(level, ts, md, state)
-    |> transmit(connector, host, port, token)
+    |> transmit(connector, host, token)
   end
 
   defp format_message(msg, level, ts, md, state) do
@@ -62,8 +62,8 @@ defmodule Logger.Backend.Splunk do
     |> Enum.reject(&(String.trim(&1) == ""))
   end
 
-  defp transmit(entry, connector, host, port, token) do
-    connector.transmit(entry, host, port, token)
+  defp transmit(entry, connector, host, token) do
+    connector.transmit(entry, host, token)
   end
 
   defp take_metadata(metadata, keys) do
@@ -81,8 +81,7 @@ defmodule Logger.Backend.Splunk do
     Application.put_env(:logger, name, opts)
 
     connector = Keyword.get(opts, :connector, Logger.Backend.Splunk.Output.Http)
-    host = Keyword.get(opts, :host, 'mbta.splunkcloud.com')
-    port = Keyword.get(opts, :port, 9997)
+    host = Keyword.get(opts, :host)
     level = Keyword.get(opts, :level, :debug)
     metadata = Keyword.get(opts, :metadata, [])
     format = Keyword.get(opts, :format, @default_format) |> Logger.Formatter.compile
@@ -91,7 +90,6 @@ defmodule Logger.Backend.Splunk do
       name: name,
       connector: connector,
       host: host,
-      port: port,
       level: level,
       format: format,
       metadata: metadata,
