@@ -82,12 +82,6 @@ defmodule Logger.Backend.Splunk.Test do
     assert read_log() == "user_id=13 auth=true hello\n"
   end
 
-  test "can configure token from environment" do
-    config token: {:system, "PATH"}
-    Logger.info "log"
-    assert read_log() =~ System.get_env("PATH")
-  end
-
   test "can handle multi-line messages" do
     config format: "$metadata$message\n", metadata: [:user_id, :auth]
     Logger.metadata(auth: true)
