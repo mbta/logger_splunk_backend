@@ -57,30 +57,13 @@ defmodule Logger.Backend.Splunk do
     Logger.Formatter.format(format, level, msg, ts, take_metadata(md, keys))
   end
 
-  defp add_token_to_lines(entry, token) do
-    entry
-    |> IO.chardata_to_string
-    |> String.split("\n")
-    |> filter_empty_strings
-    |> Enum.map(&(" #{token} #{&1}"))
-    |> Enum.join("\n")
-    |> add_optional_newline
-  end
-
   defp filter_empty_strings(strings) do
     strings
     |> Enum.reject(&(String.trim(&1) == ""))
   end
 
-  defp add_optional_newline(<<_::utf8, "\n">>=entry) do
-    entry
-  end
-  defp add_optional_newline(entry) do
-    entry <> "\n"
-  end
-
   defp transmit(entry, connector, host, port, token) do
-    connector.transmit(host, port, entry, token)
+    connector.transmit(entry, host, port, token)
   end
 
   defp take_metadata(metadata, keys) do
@@ -97,7 +80,7 @@ defmodule Logger.Backend.Splunk do
     opts = Keyword.merge(env, opts)
     Application.put_env(:logger, name, opts)
 
-    connector = Keyword.get(opts, :connector, Logger.Backend.Splunk.Output.Tcp)
+    connector = Keyword.get(opts, :connector, Logger.Backend.Splunk.Output.Http)
     host = Keyword.get(opts, :host, 'mbta.splunkcloud.com')
     port = Keyword.get(opts, :port, 9997)
     level = Keyword.get(opts, :level, :debug)
@@ -113,7 +96,6 @@ defmodule Logger.Backend.Splunk do
       format: format,
       metadata: metadata,
       token: token(Keyword.get(opts, :token, ""))
-
     }
   end
 
