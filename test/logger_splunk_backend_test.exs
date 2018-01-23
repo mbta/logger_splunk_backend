@@ -33,7 +33,6 @@ defmodule Logger.Backend.Splunk.Test do
     config([
       connector: Output.Test,
       host: 'splunk.url',
-      port: 10000,
       format: "[$level] $message\n",
       token: "<<splunk-token>>"
     ])
