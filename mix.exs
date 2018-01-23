@@ -16,12 +16,15 @@ defmodule LoggerSplunkBackend.Mixfile do
 
   def application do
     [
-      applications: [:logger]
+      extra_applications: [:logger]
     ]
   end
 
   defp deps do
-    []
+    [
+      {:httpoison, "~> 1.0"},
+      {:poison, "~> 3.1"}
+    ]
   end
 
   defp description do
