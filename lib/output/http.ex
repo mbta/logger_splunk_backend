@@ -8,7 +8,7 @@ defmodule Logger.Backend.Splunk.Output.Http do
     opts = [hackney: [pool: :logger_splunk_backend]]
     case HTTPoison.post(host, msg, headers, opts) do
       {:error, %HTTPoison.Error{reason: reason}} ->
-        Logger.warn("HTTP POST request failed: #{inspect reason}")
+        Logger.warn("Splunk Logger HTTP POST request failed: #{inspect reason}")
       {:ok, _response} ->
         nil
     end
