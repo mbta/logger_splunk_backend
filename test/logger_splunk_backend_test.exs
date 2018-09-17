@@ -34,7 +34,8 @@ defmodule Logger.Backend.Splunk.Test do
       connector: Output.Test,
       host: 'splunk.url',
       format: "[$level] $message",
-      token: "<<splunk-token>>"
+      token: "<<splunk-token>>",
+      max_buffer: 0
     ])
     on_exit fn ->
       connector().destroy()
@@ -96,6 +97,21 @@ defmodule Logger.Backend.Splunk.Test do
     assert read_log() =~ "[info] hello"
     Logger.info("hello\n")
     assert read_log() =~ "[info] hello\\n"
+  end
+
+  test "buffers messages" do
+    config(max_buffer: 2)
+    Logger.info("hello")
+    refute read_log()
+    Logger.info("again")
+    assert read_log() =~ "hello"
+    assert read_log() =~ "again"
+    connector().destroy()
+    Logger.info("1")
+    refute read_log()
+    Logger.info("2")
+    assert read_log() =~ "1"
+    assert read_log() =~ "2"
   end
 
   defp config(opts) do

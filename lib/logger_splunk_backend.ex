@@ -10,6 +10,8 @@ defmodule Logger.Backend.Splunk do
     state = %{
       name: name,
       buffer: [],
+      max_buffer: 32,
+      buffer_size: 0,
       connector: Logger.Backend.Splunk.Output.Http,
       host: nil,
       level: :debug,
@@ -33,8 +35,10 @@ defmodule Logger.Backend.Splunk do
 
   @impl true
   def handle_event({level, _gl, {Logger, msg, ts, md}}, %{level: min_level} = state) do
-    if is_nil(min_level) or Logger.compare_levels(level, min_level) != :lt do
+    state = if is_nil(min_level) or Logger.compare_levels(level, min_level) != :lt do
       log_event(level, msg, ts, md, state)
+    else
+      state
     end
     {:ok, state}
   end
@@ -49,10 +53,14 @@ defmodule Logger.Backend.Splunk do
     {:ok, state}
   end
 
-  defp log_event(level, msg, ts, md, %{connector: connector, host: host, token: token} = state) do
-    msg
-    |> format_message(level, ts, md, state)
-    |> transmit(connector, host, token)
+  defp log_event(level, msg, ts, md, state) do
+    data = format_message(msg, level, ts, md, state)
+    state = %{
+      state |
+      buffer: [data | state.buffer],
+      buffer_size: state.buffer_size + 1
+    }
+    maybe_send(state)
   end
 
   defp format_message(msg, level, ts, md, state) do
@@ -76,8 +84,15 @@ defmodule Logger.Backend.Splunk do
     Logger.Formatter.format(format, level, msg, ts, take_metadata(md, keys))
   end
 
-  defp transmit(entry, connector, host, token) do
-    connector.transmit(entry, host, token)
+  def maybe_send(%{buffer_size: bs, max_buffer: mb} = state) when bs >= mb do
+    state.connector.transmit(state.buffer, state.host, state.token)
+    %{state |
+      buffer: [],
+      buffer_size: 0
+    }
+  end
+  def maybe_send(state) do
+    state
   end
 
   defp take_metadata(metadata, keys) do
@@ -99,12 +114,14 @@ defmodule Logger.Backend.Splunk do
     level = Keyword.get(opts, :level, state.level)
     metadata = Keyword.get(opts, :metadata, state.metadata)
     format = Keyword.get(opts, :format, state.format)
+    max_buffer = Keyword.get(opts, :max_buffer, state.max_buffer)
 
     %{state |
       connector: connector,
       host: host,
       level: level,
       format: format,
+      max_buffer: max_buffer,
       compiled_format: Logger.Formatter.compile(format),
       metadata: metadata,
       token: token(Keyword.get(opts, :token, ""))
