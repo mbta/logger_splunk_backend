@@ -74,10 +74,10 @@ defmodule Logger.Backend.Splunk do
   end
 
   @unix_epoch :calendar.datetime_to_gregorian_seconds({{1970, 1, 1}, {0, 0, 0}})
-  def ts_to_unix({date, {h, m, s, _}}) do
+  def ts_to_unix({date, {h, m, s, ms}}) do
     # drop the sub-second value
     gregorian_seconds = :calendar.datetime_to_gregorian_seconds({date, {h, m, s}})
-    gregorian_seconds - @unix_epoch
+    (gregorian_seconds - @unix_epoch) + (ms / 1000)
   end
 
   defp format_event(level, msg, ts, md, %{compiled_format: format, metadata: keys}) do

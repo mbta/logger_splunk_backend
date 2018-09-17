@@ -60,7 +60,7 @@ defmodule Logger.Backend.Splunk.Test do
     assert connector().exists()
     data = Jason.decode!(read_log())
     assert data["event"] == "[warn] you will log me"
-    assert is_integer(data["time"])
+    assert is_float(data["time"])
     assert data["sourcetype"] == "httpevent"
   end
 
