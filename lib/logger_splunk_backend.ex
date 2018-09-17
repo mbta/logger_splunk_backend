@@ -7,12 +7,25 @@ defmodule Logger.Backend.Splunk do
 
   @impl true
   def init({__MODULE__, name}) do
-    {:ok, configure(name, [])}
+    state = %{
+      name: name,
+      buffer: [],
+      max_buffer: 32,
+      buffer_size: 0,
+      connector: Logger.Backend.Splunk.Output.Http,
+      host: nil,
+      level: :debug,
+      format: @default_format,
+      compiled_format: Logger.Formatter.compile(@default_format),
+      metadata: [],
+      token: ""
+    }
+    {:ok, configure([], state)}
   end
 
   @impl true
-  def handle_call({:configure, opts}, %{name: name}) do
-    {:ok, :ok, configure(name, opts)}
+  def handle_call({:configure, opts}, state) do
+    {:ok, :ok, configure(opts, state)}
   end
 
   @impl true
@@ -22,8 +35,10 @@ defmodule Logger.Backend.Splunk do
 
   @impl true
   def handle_event({level, _gl, {Logger, msg, ts, md}}, %{level: min_level} = state) do
-    if is_nil(min_level) or Logger.compare_levels(level, min_level) != :lt do
+    state = if is_nil(min_level) or Logger.compare_levels(level, min_level) != :lt do
       log_event(level, msg, ts, md, state)
+    else
+      state
     end
     {:ok, state}
   end
@@ -38,32 +53,47 @@ defmodule Logger.Backend.Splunk do
     {:ok, state}
   end
 
-  defp log_event(level, msg, ts, md, %{connector: connector, host: host, token: token} = state) do
-    msg
-    |> format_message(level, ts, md, state)
-    |> transmit(connector, host, token)
+  defp log_event(level, msg, ts, md, state) do
+    data = format_message(msg, level, ts, md, state)
+    state = %{
+      state |
+      buffer: [data | state.buffer],
+      buffer_size: state.buffer_size + 1
+    }
+    maybe_send(state)
   end
 
   defp format_message(msg, level, ts, md, state) do
-    msg
-    |> IO.chardata_to_string
-    |> String.split("\n")
-    |> filter_empty_strings
-    |> Enum.map(&(format_event(level, &1, ts, md, state)))
-    |> Enum.join("")
+    event = format_event(level, msg, ts, md, state)
+    map = %{
+      event: IO.iodata_to_binary(event),
+      sourcetype: "httpevent",
+      time: ts_to_unix(ts)
+    }
+    Jason.encode_to_iodata!(map)
   end
 
-  defp format_event(level, msg, ts, md, %{format: format, metadata: keys}) do
+  @unix_epoch :calendar.datetime_to_gregorian_seconds({{1970, 1, 1}, {0, 0, 0}})
+  def ts_to_unix({date, {h, m, s, ms}}) do
+    # drop the sub-second value and convert to POSIX time
+    {date, time} = :erlang.localtime_to_universaltime({date, {h, m, s}})
+    gregorian_seconds = :calendar.datetime_to_gregorian_seconds({date, time})
+    (gregorian_seconds - @unix_epoch) + (ms / 1000)
+  end
+
+  defp format_event(level, msg, ts, md, %{compiled_format: format, metadata: keys}) do
     Logger.Formatter.format(format, level, msg, ts, take_metadata(md, keys))
   end
 
-  defp filter_empty_strings(strings) do
-    strings
-    |> Enum.reject(&(String.trim(&1) == ""))
+  def maybe_send(%{buffer_size: bs, max_buffer: mb} = state) when bs >= mb do
+    state.connector.transmit(state.buffer, state.host, state.token)
+    %{state |
+      buffer: [],
+      buffer_size: 0
+    }
   end
-
-  defp transmit(entry, connector, host, token) do
-    connector.transmit(entry, host, token)
+  def maybe_send(state) do
+    state
   end
 
   defp take_metadata(metadata, keys) do
@@ -75,23 +105,25 @@ defmodule Logger.Backend.Splunk do
     end) |> Enum.reverse()
   end
 
-  defp configure(name, opts) do
+  defp configure(opts, state) do
+    name = state.name
     env = Application.get_env(:logger, name, [])
     opts = Keyword.merge(env, opts)
     Application.put_env(:logger, name, opts)
+    connector = Keyword.get(opts, :connector, state.connector)
+    host = Keyword.get(opts, :host, state.host)
+    level = Keyword.get(opts, :level, state.level)
+    metadata = Keyword.get(opts, :metadata, state.metadata)
+    format = Keyword.get(opts, :format, state.format)
+    max_buffer = Keyword.get(opts, :max_buffer, state.max_buffer)
 
-    connector = Keyword.get(opts, :connector, Logger.Backend.Splunk.Output.Http)
-    host = Keyword.get(opts, :host)
-    level = Keyword.get(opts, :level, :debug)
-    metadata = Keyword.get(opts, :metadata, [])
-    format = Keyword.get(opts, :format, @default_format) |> Logger.Formatter.compile
-
-    %{
-      name: name,
+    %{state |
       connector: connector,
       host: host,
       level: level,
       format: format,
+      max_buffer: max_buffer,
+      compiled_format: Logger.Formatter.compile(format),
       metadata: metadata,
       token: token(Keyword.get(opts, :token, ""))
     }
