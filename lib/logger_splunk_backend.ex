@@ -75,8 +75,9 @@ defmodule Logger.Backend.Splunk do
 
   @unix_epoch :calendar.datetime_to_gregorian_seconds({{1970, 1, 1}, {0, 0, 0}})
   def ts_to_unix({date, {h, m, s, ms}}) do
-    # drop the sub-second value
-    gregorian_seconds = :calendar.datetime_to_gregorian_seconds({date, {h, m, s}})
+    # drop the sub-second value and convert to POSIX time
+    {date, time} = :erlang.localtime_to_universaltime({date, {h, m, s}})
+    gregorian_seconds = :calendar.datetime_to_gregorian_seconds({date, time})
     (gregorian_seconds - @unix_epoch) + (ms / 1000)
   end
 
@@ -85,7 +86,7 @@ defmodule Logger.Backend.Splunk do
   end
 
   def maybe_send(%{buffer_size: bs, max_buffer: mb} = state) when bs >= mb do
-    state.connector.transmit(state.buffer, state.host, state.token)
+    state.connector.transmit(Enum.reverse(state.buffer), state.host, state.token)
     %{state |
       buffer: [],
       buffer_size: 0
