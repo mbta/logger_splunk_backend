@@ -86,7 +86,7 @@ defmodule Logger.Backend.Splunk do
   end
 
   def maybe_send(%{buffer_size: bs, max_buffer: mb} = state) when bs >= mb do
-    state.connector.transmit(Enum.reverse(state.buffer), state.host, state.token)
+    state.connector.transmit(state.buffer, state.host, state.token)
     %{state |
       buffer: [],
       buffer_size: 0
