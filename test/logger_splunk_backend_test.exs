@@ -33,7 +33,7 @@ defmodule Logger.Backend.Splunk.Test do
     config([
       connector: Output.Test,
       host: 'splunk.url',
-      format: "[$level] $message\n",
+      format: "[$level] $message",
       token: "<<splunk-token>>"
     ])
     on_exit fn ->
@@ -57,42 +57,45 @@ defmodule Logger.Backend.Splunk.Test do
     config(level: :info)
     Logger.warn("you will log me")
     assert connector().exists()
-    assert read_log() == "[warn] you will log me\n"
+    data = Jason.decode!(read_log())
+    assert data["event"] == "[warn] you will log me"
+    assert is_integer(data["time"])
+    assert data["sourcetype"] == "httpevent"
   end
 
   test "can configure format" do
     config format: "$message ($level)\n"
 
     Logger.info("I am formatted")
-    assert read_log() == "I am formatted (info)\n"
+    assert read_log() =~ "I am formatted (info)"
   end
 
   test "can configure metadata" do
     config format: "$metadata$message\n", metadata: [:user_id, :auth]
 
     Logger.info("hello")
-    assert read_log() == "hello\n"
+    assert read_log() =~ "hello"
 
     Logger.metadata(auth: true)
     Logger.metadata(user_id: 11)
     Logger.metadata(user_id: 13)
 
     Logger.info("hello")
-    assert read_log() == "user_id=13 auth=true hello\n"
+    assert read_log() =~ "user_id=13 auth=true hello"
   end
 
   test "can handle multi-line messages" do
     config format: "$metadata$message\n", metadata: [:user_id, :auth]
     Logger.metadata(auth: true)
     Logger.info("hello\n world")
-    assert read_log() == "auth=true hello\nauth=true  world\n"
+    assert read_log() =~ "auth=true hello\\n world"
   end
 
   test "makes sure messages end with a newline" do
     Logger.info("hello")
-    assert read_log() == "[info] hello\n"
+    assert read_log() =~ "[info] hello"
     Logger.info("hello\n")
-    assert read_log() == "[info] hello\n"
+    assert read_log() =~ "[info] hello\\n"
   end
 
   defp config(opts) do
