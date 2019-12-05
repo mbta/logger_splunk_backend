@@ -37,9 +37,9 @@ defmodule LoggerSplunkBackend.Mixfile do
   defp package do
     [
       files: ["config", "lib", "mix.exs", "README*", "LICENSE*"],
-      maintainers: ["Sysdia Solutions"],
+      maintainers: ["MBTA"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/sysdia-solutions/logger_splunk_backend"}
+      links: %{"GitHub" => "https://github.com/mbta/logger_splunk_backend"}
     ]
   end
 end
