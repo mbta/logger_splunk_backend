@@ -43,6 +43,12 @@ defmodule Logger.Backend.Splunk do
     {:ok, state}
   end
 
+  def handle_event(:flush, state) do
+    # pretend the buffer is full to ensure all messages are sent
+    state = %{state | buffer_size: state.max_buffer}
+    {:ok, maybe_send(state)}
+  end
+
   @impl true
   def handle_info({:io_reply, _ref, :ok}, state) do
     # ignored

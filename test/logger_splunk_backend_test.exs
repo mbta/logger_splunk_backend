@@ -114,6 +114,14 @@ defmodule Logger.Backend.Splunk.Test do
     assert read_log() =~ "2"
   end
 
+  test "handles flush/0" do
+    config(max_buffer: 2)
+    Logger.info("hello")
+    refute read_log()
+    Logger.flush()
+    assert read_log() =~ "hello"
+  end
+
   defp config(opts) do
     Logger.configure_backend(@backend, opts)
   end
