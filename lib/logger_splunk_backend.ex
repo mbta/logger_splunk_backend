@@ -55,7 +55,7 @@ defmodule Logger.Backend.Splunk do
     {:ok, state}
   end
   def handle_info(message, state) do
-    Logger.warn(fn -> "#{__MODULE__} unhandled message: #{inspect message}" end)
+    IO.puts("#{__MODULE__} unhandled message: #{inspect message}")
     {:ok, state}
   end
 
