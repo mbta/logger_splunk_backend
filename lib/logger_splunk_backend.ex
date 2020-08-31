@@ -12,7 +12,6 @@ defmodule Logger.Backend.Splunk do
       buffer: [],
       max_buffer: 32,
       buffer_size: 0,
-      connector: Logger.Backend.Splunk.Output.Http,
       host: nil,
       level: :debug,
       format: @default_format,
@@ -26,11 +25,6 @@ defmodule Logger.Backend.Splunk do
   @impl true
   def handle_call({:configure, opts}, state) do
     {:ok, :ok, configure(opts, state)}
-  end
-
-  @impl true
-  def handle_call(:connector, %{connector: connector} = state) do
-    {:ok, {:ok, connector}, state}
   end
 
   @impl true
@@ -93,7 +87,10 @@ defmodule Logger.Backend.Splunk do
   end
 
   def maybe_send(%{buffer_size: bs, max_buffer: mb} = state) when bs >= mb do
-    state.connector.transmit(state.buffer, state.host, state.token)
+    headers = [{"Authorization", "Splunk #{state.token}"}, {"Content-Type", "application/json"}]
+    opts = [hackney: [pool: :logger_splunk_backend]]
+    HTTPoison.post(state.host, IO.iodata_to_binary(state.buffer), headers, opts)
+
     %{state |
       buffer: [],
       buffer_size: 0
@@ -117,7 +114,6 @@ defmodule Logger.Backend.Splunk do
     env = Application.get_env(:logger, name, [])
     opts = Keyword.merge(env, opts)
     Application.put_env(:logger, name, opts)
-    connector = Keyword.get(opts, :connector, state.connector)
     host = Keyword.get(opts, :host, state.host)
     level = Keyword.get(opts, :level, state.level)
     metadata = Keyword.get(opts, :metadata, state.metadata)
@@ -125,7 +121,6 @@ defmodule Logger.Backend.Splunk do
     max_buffer = Keyword.get(opts, :max_buffer, state.max_buffer)
 
     %{state |
-      connector: connector,
       host: host,
       level: level,
       format: format,
