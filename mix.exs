@@ -4,10 +4,10 @@ defmodule LoggerSplunkBackend.Mixfile do
   def project do
     [
       app: :logger_splunk_backend,
-      version: "1.0.0",
-      elixir: "~> 1.0",
-      build_embedded: Mix.env == :prod,
-      start_permanent: Mix.env == :prod,
+      version: "1.1.0",
+      elixir: "~> 1.7",
+      build_embedded: Mix.env() == :prod,
+      start_permanent: Mix.env() == :prod,
       description: description(),
       package: package(),
       deps: deps()
@@ -23,14 +23,16 @@ defmodule LoggerSplunkBackend.Mixfile do
   defp deps do
     [
       {:httpoison, "~> 1.6"},
-      {:jason, "~> 1.1"}
+      {:jason, "~> 1.1"},
+      {:bypass, "~> 2.0", optional: true, only: [:test]},
+      {:cowlib, "~> 1.0.2", optional: true, only: [:test]}
     ]
   end
 
   defp description do
     """
     A Logger backend to support the Splunk service
-    (splunk.com) TCP input log mechanism
+    (splunk.com) HTTP Event Collector log mechanism
     """
   end
 
