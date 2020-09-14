@@ -62,6 +62,7 @@ defmodule Logger.Backend.Splunk.Test do
     assert data["event"] == "[warn] you will log me"
     assert is_float(data["time"])
     assert data["sourcetype"] == "httpevent"
+    assert is_binary(data["host"])
   end
 
   test "can configure format" do

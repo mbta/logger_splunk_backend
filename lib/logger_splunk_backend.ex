@@ -74,6 +74,7 @@ defmodule Logger.Backend.Splunk do
     map = %{
       event: IO.iodata_to_binary(event),
       sourcetype: "httpevent",
+      host: Atom.to_string(node()),
       time: ts_to_unix(ts)
     }
     Jason.encode_to_iodata!(map)
