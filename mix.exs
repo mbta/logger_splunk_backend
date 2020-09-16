@@ -10,7 +10,8 @@ defmodule LoggerSplunkBackend.Mixfile do
       start_permanent: Mix.env() == :prod,
       description: description(),
       package: package(),
-      deps: deps()
+      deps: deps(),
+      elixirc_paths: elixirc_paths(Mix.env())
     ]
   end
 
@@ -28,6 +29,10 @@ defmodule LoggerSplunkBackend.Mixfile do
       {:cowlib, "~> 1.0.2", optional: true, only: [:test]}
     ]
   end
+
+  # Specifies which paths to compile per environment.
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp description do
     """
