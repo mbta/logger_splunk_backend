@@ -29,6 +29,11 @@ defmodule Logger.Backend.Splunk do
     {:ok, configure([], state)}
   end
 
+  def init(__MODULE__) do
+    # use a default name
+    init({__MODULE__, __MODULE__})
+  end
+
   @impl :gen_event
   def handle_call({:configure, opts}, state) do
     {:ok, :ok, configure(opts, state)}
