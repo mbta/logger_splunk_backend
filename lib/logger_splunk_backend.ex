@@ -17,6 +17,7 @@ defmodule Logger.Backend.Splunk do
       printing_response?: false,
       error_device: :stdio,
       erlang_host_json: ~s("host":""),
+      index_json: [],
       host: nil,
       level: :debug,
       format: @default_format,
@@ -178,6 +179,7 @@ defmodule Logger.Backend.Splunk do
     # build the raw JSON as an IOlist
     [
       "{",
+      state.index_json,
       state.erlang_host_json,
       ~s["event":],
       event_json,
@@ -261,6 +263,18 @@ defmodule Logger.Backend.Splunk do
     max_buffer = Keyword.get(opts, :max_buffer, state.max_buffer)
     error_device = Keyword.get(opts, :error_device, state.error_device)
 
+    index_json =
+      case Keyword.fetch(opts, :index) do
+        {:ok, nil} ->
+          []
+
+        :error ->
+          []
+
+        {:ok, index} ->
+          [~s["index":], Jason.encode_to_iodata!(index), ","]
+      end
+
     %{
       state
       | host: host,
@@ -271,7 +285,8 @@ defmodule Logger.Backend.Splunk do
         metadata: metadata,
         token: token(Keyword.get(opts, :token, "")),
         error_device: error_device,
-        erlang_host_json: [~s("host":), Jason.encode_to_iodata!(Atom.to_string(node())), ","]
+        erlang_host_json: [~s("host":), Jason.encode_to_iodata!(Atom.to_string(node())), ","],
+        index_json: index_json
     }
   end
 

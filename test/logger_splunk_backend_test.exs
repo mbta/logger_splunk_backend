@@ -60,6 +60,21 @@ defmodule Logger.Backend.Splunk.Test do
       binary = IO.iodata_to_binary(iodata)
       assert binary =~ "00.5"
     end
+
+    test "can include the index if configured" do
+      msg = "msg"
+      level = :info
+      metadata = %{}
+      {:ok, state} = Logger.Backend.Splunk.init({Logger.Backend.Splunk, :name})
+
+      {:ok, :ok, state} =
+        Logger.Backend.Splunk.handle_call({:configure, index: "selected_index"}, state)
+
+      ts = {{2020, 9, 16}, {0, 0, 0, 0}}
+      iodata = Logger.Backend.Splunk.format_message(msg, level, ts, metadata, state)
+      json = Jason.decode!(IO.iodata_to_binary(iodata))
+      assert json["index"] == "selected_index"
+    end
   end
 
   test "default logger level is `:debug`" do
