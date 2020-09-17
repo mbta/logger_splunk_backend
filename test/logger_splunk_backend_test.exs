@@ -36,6 +36,32 @@ defmodule Logger.Backend.Splunk.Test do
     {:ok, %{bypass: bypass, io: io}}
   end
 
+  describe "format_message/5" do
+    test "always formats the timestamp as a normal number (not scientific notation)" do
+      msg = "msg"
+      level = :info
+      metadata = %{}
+      {:ok, state} = Logger.Backend.Splunk.init({Logger.Backend.Splunk, :name})
+      ts = {{2020, 9, 16}, {0, 0, 0, 0}}
+      iodata = Logger.Backend.Splunk.format_message(msg, level, ts, metadata, state)
+      binary = IO.iodata_to_binary(iodata)
+      assert binary =~ "00"
+      # scientific notation
+      refute binary =~ "e9"
+    end
+
+    test "can include the milliseconds in the encoded time" do
+      msg = "msg"
+      level = :info
+      metadata = %{}
+      {:ok, state} = Logger.Backend.Splunk.init({Logger.Backend.Splunk, :name})
+      ts = {{2020, 9, 16}, {0, 0, 0, 500}}
+      iodata = Logger.Backend.Splunk.format_message(msg, level, ts, metadata, state)
+      binary = IO.iodata_to_binary(iodata)
+      assert binary =~ "00.5"
+    end
+  end
+
   test "default logger level is `:debug`" do
     assert Logger.level() == :debug
   end

@@ -16,6 +16,7 @@ defmodule Logger.Backend.Splunk do
       output: nil,
       printing_response?: false,
       error_device: :stdio,
+      erlang_host_json: ~s("host":""),
       host: nil,
       level: :debug,
       format: @default_format,
@@ -159,18 +160,31 @@ defmodule Logger.Backend.Splunk do
     }
   end
 
-  defp format_message(msg, level, ts, md, state) do
+  @spec format_message(iodata, Logger.level(), Logger.Formatter.time(), Logger.metadata(), map) ::
+          iodata
+  @doc "Given a log message (and various metadata), return a JSON event as an iolist."
+  def format_message(msg, level, ts, md, state) do
     event = format_event(level, msg, ts, md, state)
+    # ensure the event is properly escaped
+    event_json = Jason.encode_to_iodata!(IO.iodata_to_binary(event))
+    # ensure we encode the timestamp without using scientific notation. if we
+    # do, then it breaks splunk with an "Error in handling indexed fields"
+    ts_float =
+      :erlang.float_to_binary(
+        ts_to_unix(ts),
+        [:compact, decimals: 3]
+      )
 
-    map = %{
-      event: IO.iodata_to_binary(event),
-      host: Atom.to_string(node()),
-      sourcetype: "httpevent",
-      host: Atom.to_string(node()),
-      time: ts_to_unix(ts)
-    }
-
-    Jason.encode_to_iodata!(map)
+    # build the raw JSON as an IOlist
+    [
+      "{",
+      state.erlang_host_json,
+      ~s["event":],
+      event_json,
+      ~s[,"time":],
+      ts_float,
+      ~s[,"sourcetype":"httpevent"}]
+    ]
   end
 
   @unix_epoch :calendar.datetime_to_gregorian_seconds({{1970, 1, 1}, {0, 0, 0}})
@@ -256,7 +270,8 @@ defmodule Logger.Backend.Splunk do
         compiled_format: Logger.Formatter.compile(format),
         metadata: metadata,
         token: token(Keyword.get(opts, :token, "")),
-        error_device: error_device
+        error_device: error_device,
+        erlang_host_json: [~s("host":), Jason.encode_to_iodata!(Atom.to_string(node())), ","]
     }
   end
 
