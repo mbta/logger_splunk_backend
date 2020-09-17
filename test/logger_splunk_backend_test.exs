@@ -77,6 +77,12 @@ defmodule Logger.Backend.Splunk.Test do
     end
   end
 
+  test "can be added with a default name" do
+    assert {:ok, pid} = Logger.add_backend(Logger.Backend.Splunk)
+    assert is_pid(pid)
+    Logger.remove_backend(Logger.Backend.Splunk)
+  end
+
   test "default logger level is `:debug`" do
     assert Logger.level() == :debug
   end
