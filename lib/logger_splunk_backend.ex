@@ -246,6 +246,10 @@ defmodule Logger.Backend.Splunk do
     maybe_send(state)
   end
 
+  defp take_metadata(metadata, :all) do
+    Keyword.delete(metadata, :crash_reason)
+  end
+
   defp take_metadata(metadata, keys) do
     Enum.reduce(keys, [], fn key, acc ->
       case Keyword.fetch(metadata, key) do
