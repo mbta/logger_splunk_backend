@@ -247,7 +247,9 @@ defmodule Logger.Backend.Splunk do
   end
 
   defp take_metadata(metadata, :all) do
-    Keyword.delete(metadata, :crash_reason)
+    metadata
+    |> Keyword.delete(:crash_reason)
+    |> Enum.reverse()
   end
 
   defp take_metadata(metadata, keys) do
@@ -257,7 +259,6 @@ defmodule Logger.Backend.Splunk do
         :error -> acc
       end
     end)
-    |> Enum.reverse()
   end
 
   defp configure(opts, state) do
@@ -267,10 +268,16 @@ defmodule Logger.Backend.Splunk do
     Application.put_env(:logger, name, opts)
     host = Keyword.get(opts, :host, state.host)
     level = Keyword.get(opts, :level, state.level)
-    metadata = Keyword.get(opts, :metadata, state.metadata)
     format = Keyword.get(opts, :format, state.format)
     max_buffer = Keyword.get(opts, :max_buffer, state.max_buffer)
     error_device = Keyword.get(opts, :error_device, state.error_device)
+
+    metadata =
+      case Keyword.fetch(opts, :metadata) do
+        {:ok, :all} -> :all
+        {:ok, metadata} when is_list(metadata) -> Enum.reverse(metadata)
+        _ -> state.metadata
+      end
 
     index_json =
       case Keyword.fetch(opts, :index) do
