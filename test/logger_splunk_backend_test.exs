@@ -26,7 +26,8 @@ defmodule Logger.Backend.Splunk.Test do
       format: "$metadata[$level] $message",
       token: "<<splunk-token>>",
       max_buffer: 0,
-      error_device: io
+      error_device: io,
+      metadata: []
     )
 
     on_exit(fn ->
@@ -211,6 +212,23 @@ defmodule Logger.Backend.Splunk.Test do
     error_output = FakeIO.get(opts.io)
     assert error_output =~ "ERROR unable to connect to Splunk: :econnrefused"
     assert error_output =~ "should not crash"
+  end
+
+  test "can accept :all metadata (except crash_reason)", opts do
+    # crash reason is also not accepted by the Console logger.
+    pid = connect_log_agent(opts.bypass)
+    config(metadata: :all)
+    Logger.metadata(crash_reason: {%RuntimeError{message: "oops"}, []})
+    Logger.info("message")
+    log = read_log(pid)
+    assert log =~ "message"
+    assert log =~ "line="
+    assert log =~ "function="
+    assert log =~ "module=Logger.Backend.Splunk.Test"
+    assert log =~ "file="
+    refute log =~ "crash_reason="
+  after
+    Logger.metadata([])
   end
 
   defp config(opts) do
