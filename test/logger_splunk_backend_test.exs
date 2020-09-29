@@ -231,12 +231,36 @@ defmodule Logger.Backend.Splunk.Test do
     Logger.metadata([])
   end
 
+  test "retries sending the message if it fails", opts do
+    {:ok, pid} = start_agent()
+    {:ok, has_seen_pid} = Agent.start_link(fn -> false end)
+
+    Bypass.expect(opts.bypass, fn conn ->
+      if Agent.get(has_seen_pid, & &1) do
+        {:ok, body, conn} = Plug.Conn.read_body(conn)
+        Agent.update(pid, fn value -> [value, body] end)
+        Plug.Conn.send_resp(conn, 200, "")
+      else
+        Agent.update(has_seen_pid, fn _ -> true end)
+        Plug.Conn.send_resp(conn, 404, "")
+      end
+    end)
+
+    :ok = Logger.info("retry")
+    :ok = Logger.flush()
+
+    assert read_log(pid) =~ "retry"
+
+    error_output = FakeIO.get(opts.io)
+    refute error_output =~ "retry error"
+  end
+
   defp config(opts) do
     Logger.configure_backend(@backend, opts)
   end
 
   defp connect_log_agent(bypass, delay \\ 0) do
-    {:ok, pid} = Agent.start_link(fn -> [] end)
+    {:ok, pid} = start_agent()
 
     Bypass.expect(bypass, fn conn ->
       {:ok, body, conn} = Plug.Conn.read_body(conn)
@@ -246,6 +270,10 @@ defmodule Logger.Backend.Splunk.Test do
     end)
 
     pid
+  end
+
+  defp start_agent do
+    Agent.start_link(fn -> [] end)
   end
 
   defp read_log(pid, flush? \\ true) do

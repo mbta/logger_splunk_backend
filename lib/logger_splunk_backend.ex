@@ -128,19 +128,42 @@ defmodule Logger.Backend.Splunk do
   end
 
   defp handle_http_response(%HTTPoison.AsyncEnd{}, state) do
+    if state.printing_response? do
+      case try_sync_send(state, state.output) do
+        :ok ->
+          :ok
+
+        new_error ->
+          # log the original error
+          IO.puts(state.error_device, ["ERROR retry error: ", inspect(new_error)])
+      end
+    end
+
     maybe_send(%{state | response: nil, output: nil, printing_response?: false})
   end
 
   defp handle_http_response(%HTTPoison.Error{reason: reason}, state) do
-    IO.puts(state.error_device, [
-      "ERROR unable to log to Splunk: ",
-      inspect(reason),
-      "\n",
-      "ERROR sent: ",
-      state.output
-    ])
+    case try_sync_send(state, state.output) do
+      :ok ->
+        :ok
 
-    maybe_send(%{state | response: nil, output: nil, printing_response?: false})
+      new_error ->
+        # log the original error
+        IO.puts(state.error_device, [
+          "ERROR unable to log to Splunk: ",
+          inspect(reason),
+          "\n",
+          "ERROR retry error: ",
+          inspect(new_error),
+          "\n",
+          "ERROR sent: ",
+          state.output
+        ])
+    end
+
+    state = %{state | response: nil, output: nil, printing_response?: false}
+
+    maybe_send(state)
   end
 
   defp meet_level?(_level, nil) do
@@ -207,18 +230,29 @@ defmodule Logger.Backend.Splunk do
   end
 
   defp maybe_send(%{response: nil, buffer_size: bs} = state) when bs != 0 do
-    case send_to_splunk(state) do
+    case send_to_splunk(state, state.buffer, stream_to: self()) do
       {:ok, response} ->
         %{state | response: response, output: state.buffer, buffer: [], buffer_size: 0}
 
       {:error, %{reason: reason}} ->
-        IO.puts(state.error_device, [
-          "ERROR unable to connect to Splunk: ",
-          inspect(reason),
-          "\n",
-          "ERROR sent: ",
-          state.buffer
-        ])
+        # try once to send normally, not async
+        case try_sync_send(state, state.buffer) do
+          :ok ->
+            :ok
+
+          new_error ->
+            # log the original reason
+            IO.puts(state.error_device, [
+              "ERROR unable to connect to Splunk: ",
+              inspect(reason),
+              "\n",
+              "ERROR retry error: ",
+              inspect(new_error),
+              "\n",
+              "ERROR sent: ",
+              state.buffer
+            ])
+        end
 
         %{state | buffer: [], buffer_size: 0}
     end
@@ -228,10 +262,21 @@ defmodule Logger.Backend.Splunk do
     state
   end
 
-  defp send_to_splunk(state) do
+  defp try_sync_send(state, output) do
+    # try once to send the message not async
+    case send_to_splunk(state, output) do
+      {:ok, %{status_code: 200}} ->
+        :ok
+
+      error ->
+        error
+    end
+  end
+
+  defp send_to_splunk(state, output, opts \\ []) do
     headers = [{"Authorization", "Splunk #{state.token}"}, {"Content-Type", "application/json"}]
-    opts = [hackney: [pool: :logger_splunk_backend], stream_to: self()]
-    HTTPoison.post(state.host, state.buffer, headers, opts)
+    opts = [{:hackney, [pool: :logger_splunk_backend]} | opts]
+    HTTPoison.post(state.host, output, headers, opts)
   end
 
   defp await_response(%{response: %{id: ref}} = state) do
