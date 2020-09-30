@@ -4,7 +4,7 @@ defmodule LoggerSplunkBackend.Mixfile do
   def project do
     [
       app: :logger_splunk_backend,
-      version: "1.1.0",
+      version: "2.0.0",
       elixir: "~> 1.7",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
@@ -37,13 +37,13 @@ defmodule LoggerSplunkBackend.Mixfile do
   defp description do
     """
     A Logger backend to support the Splunk service
-    (splunk.com) HTTP Event Collector log mechanism
+    (splunk.com) HTTP Event Collector (HEC)log mechanism
     """
   end
 
   defp package do
     [
-      files: ["config", "lib", "mix.exs", "README*", "LICENSE*"],
+      files: ["config", "lib", "mix.exs", "README*", "LICENSE*", "CHANGELOG*"],
       maintainers: ["MBTA"],
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/mbta/logger_splunk_backend"}

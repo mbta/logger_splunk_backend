@@ -1,7 +1,7 @@
 defmodule Logger.Backend.Splunk do
   @behaviour :gen_event
 
-  @default_format "[$level] $message\n"
+  @default_format "[$level] $message"
 
   require Logger
 
