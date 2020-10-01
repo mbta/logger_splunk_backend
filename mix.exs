@@ -26,7 +26,8 @@ defmodule LoggerSplunkBackend.Mixfile do
       {:httpoison, "~> 1.6"},
       {:jason, "~> 1.1"},
       {:bypass, "~> 2.0", optional: true, only: [:test]},
-      {:cowlib, "~> 1.0.2", optional: true, only: [:test]}
+      {:cowlib, "~> 1.0.2", optional: true, only: [:test]},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
     ]
   end
 
