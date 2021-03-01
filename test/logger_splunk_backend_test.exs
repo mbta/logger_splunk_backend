@@ -76,6 +76,26 @@ defmodule Logger.Backend.Splunk.Test do
       json = Jason.decode!(IO.iodata_to_binary(iodata))
       assert json["index"] == "selected_index"
     end
+
+    test "can handle timestamps during DST" do
+      msg = "msg"
+      level = :info
+      metadata = %{}
+      {:ok, state} = Logger.Backend.Splunk.init({Logger.Backend.Splunk, :name})
+
+      for date <- [
+            # forward
+            {2020, 3, 8},
+            # back
+            {2020, 11, 1}
+          ],
+          hour <- 0..3,
+          minute <- 0..59 do
+        ts = {date, {hour, minute, 0, 0}}
+        iodata = Logger.Backend.Splunk.format_message(msg, level, ts, metadata, state)
+        assert is_binary(IO.iodata_to_binary(iodata))
+      end
+    end
   end
 
   test "can be added with a default name" do
