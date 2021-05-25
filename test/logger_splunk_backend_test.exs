@@ -1,9 +1,10 @@
 defmodule Logger.Backend.Splunk.Test do
   use ExUnit.Case, async: false
-  alias Logger.Backend.Splunk.FakeIO
+  alias Logger.Backend.Splunk
+  alias Splunk.FakeIO
   require Logger
 
-  @backend {Logger.Backend.Splunk, __MODULE__}
+  @backend {Splunk, __MODULE__}
 
   setup do
     Application.ensure_all_started(:bypass)
@@ -42,9 +43,9 @@ defmodule Logger.Backend.Splunk.Test do
       msg = "msg"
       level = :info
       metadata = %{}
-      {:ok, state} = Logger.Backend.Splunk.init({Logger.Backend.Splunk, :name})
+      {:ok, state} = Splunk.init({Splunk, :name})
       ts = {{2020, 9, 16}, {0, 0, 0, 0}}
-      iodata = Logger.Backend.Splunk.format_message(msg, level, ts, metadata, state)
+      iodata = Splunk.format_message(msg, level, ts, metadata, state)
       binary = IO.iodata_to_binary(iodata)
       assert binary =~ "00"
       # scientific notation
@@ -55,9 +56,9 @@ defmodule Logger.Backend.Splunk.Test do
       msg = "msg"
       level = :info
       metadata = %{}
-      {:ok, state} = Logger.Backend.Splunk.init({Logger.Backend.Splunk, :name})
+      {:ok, state} = Splunk.init({Splunk, :name})
       ts = {{2020, 9, 16}, {0, 0, 0, 500}}
-      iodata = Logger.Backend.Splunk.format_message(msg, level, ts, metadata, state)
+      iodata = Splunk.format_message(msg, level, ts, metadata, state)
       binary = IO.iodata_to_binary(iodata)
       assert binary =~ "00.5"
     end
@@ -66,13 +67,12 @@ defmodule Logger.Backend.Splunk.Test do
       msg = "msg"
       level = :info
       metadata = %{}
-      {:ok, state} = Logger.Backend.Splunk.init({Logger.Backend.Splunk, :name})
+      {:ok, state} = Splunk.init({Splunk, :name})
 
-      {:ok, :ok, state} =
-        Logger.Backend.Splunk.handle_call({:configure, index: "selected_index"}, state)
+      {:ok, :ok, state} = Splunk.handle_call({:configure, index: "selected_index"}, state)
 
       ts = {{2020, 9, 16}, {0, 0, 0, 0}}
-      iodata = Logger.Backend.Splunk.format_message(msg, level, ts, metadata, state)
+      iodata = Splunk.format_message(msg, level, ts, metadata, state)
       json = Jason.decode!(IO.iodata_to_binary(iodata))
       assert json["index"] == "selected_index"
     end
@@ -81,7 +81,7 @@ defmodule Logger.Backend.Splunk.Test do
       msg = "msg"
       level = :info
       metadata = %{}
-      {:ok, state} = Logger.Backend.Splunk.init({Logger.Backend.Splunk, :name})
+      {:ok, state} = Splunk.init({Splunk, :name})
 
       for date <- [
             # forward
@@ -92,16 +92,16 @@ defmodule Logger.Backend.Splunk.Test do
           hour <- 0..3,
           minute <- 0..59 do
         ts = {date, {hour, minute, 0, 0}}
-        iodata = Logger.Backend.Splunk.format_message(msg, level, ts, metadata, state)
+        iodata = Splunk.format_message(msg, level, ts, metadata, state)
         assert is_binary(IO.iodata_to_binary(iodata))
       end
     end
   end
 
   test "can be added with a default name" do
-    assert {:ok, pid} = Logger.add_backend(Logger.Backend.Splunk)
+    assert {:ok, pid} = Logger.add_backend(Splunk)
     assert is_pid(pid)
-    Logger.remove_backend(Logger.Backend.Splunk)
+    Logger.remove_backend(Splunk)
   end
 
   test "default logger level is `:debug`" do

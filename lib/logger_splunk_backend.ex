@@ -1,4 +1,7 @@
 defmodule Logger.Backend.Splunk do
+  @moduledoc """
+  Logger backend to write logs to Splunk.
+  """
   @behaviour :gen_event
 
   @default_format "[$level] $message"
