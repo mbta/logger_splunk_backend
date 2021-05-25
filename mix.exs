@@ -11,7 +11,11 @@ defmodule LoggerSplunkBackend.Mixfile do
       description: description(),
       package: package(),
       deps: deps(),
-      elixirc_paths: elixirc_paths(Mix.env())
+      elixirc_paths: elixirc_paths(Mix.env()),
+      dialyzer: [
+        plt_add_deps: :app_tree
+      ],
+      test_coverage: [tool: LcovEx]
     ]
   end
 
@@ -27,7 +31,9 @@ defmodule LoggerSplunkBackend.Mixfile do
       {:jason, "~> 1.1"},
       {:bypass, "~> 2.0", optional: true, only: [:test]},
       {:cowlib, "~> 1.0.2", optional: true, only: [:test]},
-      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
+      {:lcov_ex, "~> 0.2", only: :test, optional: true},
+      {:credo, "~> 1.5", only: :dev, optional: true},
+      {:dialyxir, "~> 1.1", only: :dev, optional: true}
     ]
   end
 
