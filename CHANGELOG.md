@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+3.0.0
+-----
+
+- BREAKING: Minimum Elixir version is now 1.9.
+
 2.0.0
 -----
 
