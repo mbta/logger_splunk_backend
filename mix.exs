@@ -4,8 +4,8 @@ defmodule LoggerSplunkBackend.Mixfile do
   def project do
     [
       app: :logger_splunk_backend,
-      version: "2.0.0",
-      elixir: "~> 1.7",
+      version: "3.0.0",
+      elixir: "~> 1.9",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       description: description(),
