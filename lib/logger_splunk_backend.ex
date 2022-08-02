@@ -87,14 +87,7 @@ defmodule Logger.Backend.Splunk do
     {:ok, state}
   end
 
-  def handle_info(message, state) do
-    IO.puts(state.error_device, [
-      "ERROR ",
-      inspect(__MODULE__),
-      " unhandled message: ",
-      inspect(message)
-    ])
-
+  def handle_info(_message, state) do
     {:ok, state}
   end
 
