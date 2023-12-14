@@ -8,10 +8,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       # cache the ASDF directory, using the values from .tool-versions
       - name: ASDF cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.asdf
           key: ${{ runner.os }}-asdf-v2-${{ hashFiles('.tool-versions') }}
@@ -25,21 +25,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - uses: actions/checkout@v4
       - name: ASDF cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.asdf
           key: ${{ runner.os }}-asdf-v2-${{ hashFiles('.tool-versions') }}
         id: asdf-cache
-      - name: Setup ASDF environment
-        run: |
-          export ASDF_DIR=$HOME/.asdf
-          echo "ASDF_DIR=$ASDF_DIR" >> $GITHUB_ENV
-          echo "ASDF_DATA_DIR=$ASDF_DIR" >> $GITHUB_ENV
-          echo "$ASDF_DIR/bin" >> $GITHUB_PATH
-          echo "$ASDF_DIR/shims" >> $GITHUB_PATH
-          $ASDF_DIR/bin/asdf reshim
-      - uses: actions/checkout@v2
+      - uses: mbta/actions/reshim-asdf@v2
       - name: Restore dependencies cache
         id: deps-cache
         uses: actions/cache@v2
@@ -70,4 +63,4 @@ jobs:
         with:
           name: elixir-lcov
           path: cover/
-      - uses: mbta/actions/dialyzer@v1
+      - uses: mbta/actions/dialyzer@v2
