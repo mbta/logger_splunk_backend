@@ -5,6 +5,8 @@ CHANGELOG
 -----
 
 - BREAKING: Minimum Elixir version is now 1.9.
+- fix: don't log unknown messages
+- fix: don't crash during DST
 
 2.0.0
 -----

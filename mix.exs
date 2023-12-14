@@ -44,7 +44,7 @@ defmodule LoggerSplunkBackend.Mixfile do
   defp description do
     """
     A Logger backend to support the Splunk service
-    (splunk.com) HTTP Event Collector (HEC)log mechanism
+    (splunk.com) HTTP Event Collector (HEC) log mechanism
     """
   end
 
