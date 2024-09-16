@@ -27,7 +27,7 @@ defmodule LoggerSplunkBackend.Mixfile do
 
   defp deps do
     [
-      {:httpoison, "~> 1.6"},
+      {:httpoison, "~> 1.6 or ~> 2.0"},
       {:jason, "~> 1.1"},
       {:ex_doc, "< 0.23.0", only: [:dev], optional: true},
       {:bypass, "~> 2.0", optional: true, only: [:test]},
